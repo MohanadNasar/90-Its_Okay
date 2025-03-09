@@ -37,17 +37,19 @@ public class ProductController {
 
     @PutMapping("/update/{productId}")
     public Product updateProduct(@PathVariable UUID productId, @RequestBody Map<String, Object> body) {
-        String newName = (String) body.get("name");
+        String newName = (String) body.get("newName"); // Match key with request body
 
-        Object priceObj = body.get("price");
-        double newPrice = 0.0; // Default value if null
+        Object priceObj = body.get("newPrice"); // Match key with request body
+        double newPrice = 0.0;
 
-        if (priceObj != null && priceObj instanceof Number) {
+        if (priceObj instanceof Number) {
             newPrice = ((Number) priceObj).doubleValue();
         }
 
         return productService.updateProduct(productId, newName, newPrice);
     }
+
+
 
 
 
