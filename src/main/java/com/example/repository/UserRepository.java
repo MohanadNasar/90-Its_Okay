@@ -88,6 +88,11 @@ public class UserRepository extends MainRepository<User>{
         this.overrideData(users);
     }
 
+    public void clearUsers() {
+        ArrayList<User> users = this.findAll();
+        users.clear();
+        this.overrideData(users);
+    }
 
 
 }

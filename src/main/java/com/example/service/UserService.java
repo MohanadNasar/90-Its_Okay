@@ -28,6 +28,17 @@ public class UserService extends MainService<User>{
     }
 
     public User addUser(User user){
+        if (user == null || user.getName() == null || user.getName().isEmpty() || user.getId() == null) {
+            throw new IllegalArgumentException("Invalid user data");
+        }
+
+        // Check for duplicate user
+        ArrayList<User> existingUsers = userRepository.getUsers();
+        for (User existingUser : existingUsers) {
+            if (existingUser.getId().equals(user.getId())) {
+                throw new IllegalStateException("User already exists");
+            }
+        }
         return userRepository.addUser(user);
     }
 
@@ -73,7 +84,14 @@ public class UserService extends MainService<User>{
     //TODO: revisit this method
     public void emptyCart(UUID userId){
         Cart cart = cartService.getCartByUserId(userId);
-        cart.getProducts().clear();
+
+        if (cart == null) {
+            throw new IllegalArgumentException("Cart not found for user: " + userId);
+        }
+
+        if(!cart.getProducts().isEmpty()) {
+            cart.getProducts().clear();
+        }
     }
     public void removeOrderFromUser(UUID userId, UUID orderId){
         userRepository.removeOrderFromUser(userId, orderId);
