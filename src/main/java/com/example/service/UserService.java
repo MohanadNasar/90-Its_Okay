@@ -15,11 +15,13 @@ import java.util.UUID;
 public class UserService extends MainService<User>{
     //The Dependency Injection Variables
     private final UserRepository userRepository;
-    private CartService cartService;
+    private final CartService cartService;
 
     //The Constructor with the required variables mapping the Dependency Injection.
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, CartService cartService) {
         this.userRepository = userRepository;
+        this.cartService = cartService;
+
     }
 
     public User addUser(User user){
