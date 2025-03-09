@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.User;
 import com.example.service.CartService;
@@ -49,37 +50,46 @@ public class UserController {
     @PostMapping("/{userId}/checkout")
     public String addOrderToUser(@PathVariable UUID userId){
         userService.addOrderToUser(userId);
-        return "Order added to user";
+        return "Order added successfully";
     }
 
     @PostMapping("/{userId}/removeOrder")
     public String removeOrderFromUser(@PathVariable UUID userId, @RequestParam UUID orderId){
         userService.removeOrderFromUser(userId, orderId);
-        return "Order removed from user";
+        return "Order removed successfully";
     }
 
     @DeleteMapping("/{userId}/emptyCart")
     public String emptyCart(@PathVariable UUID userId){
         userService.emptyCart(userId);
-        return "Cart emptied";
+        return "Cart emptied successfully";
     }
 
     @PutMapping("/addProductToCart")
     public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId){
+        if(cartService.getCartByUserId(userId) == null){
+            cartService.addCart(new Cart(userId, new ArrayList<>()));
+        }
         cartService.addProductToCart(cartService.getCartByUserId(userId).getId(), productService.getProductById(productId));
         return "Product added to cart";
     }
 
     @PutMapping("/deleteProductFromCart")
     public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId){
+        if(cartService.getCartByUserId(userId) == null){
+            return "Cart is empty";
+        }
         cartService.deleteProductFromCart(cartService.getCartByUserId(userId).getId(), productService.getProductById(productId));
         return "Product deleted from cart";
     }
 
     @DeleteMapping("/delete/{userId}")
     public String deleteUserById(@PathVariable UUID userId){
+        if(userService.getUserById(userId) == null){
+            return "User not found";
+        }
         userService.deleteUserById(userId);
-        return "User deleted";
+        return "User deleted successfully";
     }
 
 

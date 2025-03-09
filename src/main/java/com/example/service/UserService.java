@@ -79,6 +79,9 @@ public class UserService extends MainService<User>{
         userRepository.removeOrderFromUser(userId, orderId);
     }
     public void deleteUserById(UUID userId){
+        if(userRepository.getUserById(userId) == null){
+            return;
+        }
         userRepository.deleteUserById(userId);
     }
 
