@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.model.Cart;
 import com.example.model.Order;
+import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,13 @@ public class UserService extends MainService<User>{
     //The Dependency Injection Variables
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final OrderService orderService;
 
     //The Constructor with the required variables mapping the Dependency Injection.
-    public UserService(UserRepository userRepository, CartService cartService) {
+    public UserService(UserRepository userRepository, CartService cartService, OrderService orderService) {
         this.userRepository = userRepository;
         this.cartService = cartService;
+        this.orderService = orderService;
 
     }
 
@@ -44,16 +47,26 @@ public class UserService extends MainService<User>{
     // The method to add an order to a user. Here the user should empty his cart and calculate everything related to his order and add the new order to his list of orders.
     // It should call methods from cartservice.
     public void addOrderToUser(UUID userId){
+
         // Get the user by his id
         User user = userRepository.getUserById(userId);
+
         // Get the cart of the user
         Cart cart = cartService.getCartByUserId(userId);
+
+        double totalPrice = 0;
+        for (Product product : cart.getProducts()) {
+            totalPrice += product.getPrice();
+        }
+
         // Create a new order
-         Order order = new Order(userId,cart.getProducts(),cart.getTotalPrice());
-         //Add the order to the user
-         userRepository.addOrderToUser(userId, order);
+        Order order = new Order(userId,totalPrice,cart.getProducts());
+        orderService.addOrder(order);
+
+        //Add the order to the user
+        userRepository.addOrderToUser(userId, order);
+
         // Empty the cart of the user
-        //cartService.deleteCartById(cart.getId());
         this.emptyCart(userId);
     }
 

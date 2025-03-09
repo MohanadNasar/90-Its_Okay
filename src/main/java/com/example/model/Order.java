@@ -17,14 +17,14 @@ public class Order {
 
     }
 
-    public Order(UUID id, UUID userId, List<Product> products, double totalPrice){
+    public Order(UUID id, UUID userId, double totalPrice, List<Product> products){
         this.id = id;
         this.userId = userId;
         this.products = products;
         this.totalPrice = totalPrice;
     }
 
-    public Order(UUID userId, List<Product> products, double totalPrice){
+    public Order(UUID userId, double totalPrice, List<Product> products){
         this.id = UUID.randomUUID();
         this.userId = userId;
         this.products = products;

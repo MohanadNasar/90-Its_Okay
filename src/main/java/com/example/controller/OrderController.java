@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.model.Order;
 import com.example.model.User;
 import com.example.service.CartService;
+import com.example.service.OrderService;
 import com.example.service.ProductService;
 import com.example.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -14,30 +15,30 @@ import java.util.UUID;
 @RequestMapping("/order")
 public class OrderController {
     //The Dependency Injection Variables
-    private OrderController orderController;
+    private OrderService orderService;
     //The Constructor with the requried variables mapping the Dependency Injection.
-    public OrderController(OrderController orderController) {
-        this.orderController = orderController;
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
     @PostMapping("/")
     public void addOrder(@RequestBody Order order){
-        orderController.addOrder(order);
+        orderService.addOrder(order);
     }
 
     @GetMapping("/{orderId}")
     public Order getOrderById(@PathVariable UUID orderId){
-        return orderController.getOrderById(orderId);
+        return orderService.getOrderById(orderId);
     }
 
     @GetMapping("/")
     public ArrayList<Order> getOrders(){
-        return orderController.getOrders();
+        return orderService.getOrders();
     }
 
     @DeleteMapping("/delete/{orderId}")
     public String deleteOrderById(@PathVariable UUID orderId){
-        orderController.deleteOrderById(orderId);
+        orderService.deleteOrderById(orderId);
         return "Order deleted";
     }
 
