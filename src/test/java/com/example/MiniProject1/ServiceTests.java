@@ -4,9 +4,11 @@ import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
+import com.example.repository.CartRepository;
 import com.example.repository.UserRepository;
 import com.example.service.CartService;
 import com.example.service.OrderService;
+import com.example.service.ProductService;
 import com.example.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -33,6 +35,12 @@ class ServiceTests {
     private CartService cartService;
 
     @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private ProductService productService;
+
+    @Autowired
     private OrderService orderService;
 
     private UUID userId;
@@ -57,6 +65,7 @@ class ServiceTests {
         testOrder = new Order(UUID.randomUUID(), userId, 50.0, List.of(testProduct));
 
         userRepository.addUser(testUser);
+
     }
 
     // ------------------------ User Tests -------------------------
@@ -121,7 +130,7 @@ class ServiceTests {
     void getUserById_whenUserNotFound_shouldReturnNull() {
         UUID nonExistentUserId = UUID.randomUUID();
         User user = userService.getUserById(nonExistentUserId);
-        assertNull(user, "If the user does not exist, the method should return null instead of throwing an exception.");
+        assertNull(user, "If the user does not exist, the method should return null.");
     }
 
     @Tag("user")
@@ -233,7 +242,7 @@ class ServiceTests {
     void deleteUser_whenUserExists_shouldDeleteSuccessfully() {
         userService.deleteUserById(userId);
         User deletedUser = userService.getUserById(userId);
-        assertNull(deletedUser, "After deletion, getUserById should return null instead of throwing an exception.");
+        assertNull(deletedUser, "After deletion, getUserById should return null.");
     }
 
     @Tag("user")
@@ -289,6 +298,7 @@ class ServiceTests {
     @Tag("cart")
     @Test
     void getCarts_whenNoCarts_shouldReturnEmptyList() {
+        cartRepository.clearCarts();
         List<Cart> carts = cartService.getCarts();
         assertEquals(0, carts.size(), "Should return an empty list if no carts exist");
     }
@@ -296,9 +306,17 @@ class ServiceTests {
     @Tag("cart")
     @Test
     void getCarts_whenMultipleCartsExist_shouldReturnCorrectSize() {
+        int size = cartService.getCarts().size();
+
+        Cart secondCart = new Cart();
+        secondCart.setId(UUID.randomUUID());
+        secondCart.setUserId(UUID.randomUUID());
+
         cartService.addCart(testCart);
+        cartService.addCart(secondCart);
+
         List<Cart> carts = cartService.getCarts();
-        assertEquals(1, carts.size(), "Cart list size should match the number of carts added");
+        assertEquals(2, carts.size() - size, "Cart list size should match the number of carts added.");
     }
 
     // 3) Get Cart By ID Tests
@@ -312,17 +330,17 @@ class ServiceTests {
 
     @Tag("cart")
     @Test
-    void getCartById_withInvalidId_shouldThrowException() {
+    void getCartById_withInvalidId_shouldReturnNull() {
         UUID nonExistentCartId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(nonExistentCartId),
-                "Should throw an exception if cart is not found");
+        Cart cart = cartService.getCartById(nonExistentCartId);
+        assertNull(cart, "If the cart does not exist, the method should return null.");
     }
 
     @Tag("cart")
     @Test
     void getCartById_withNullId_shouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(null),
-                "Should throw an exception if cart ID is null");
+        Cart cart = cartService.getCartById(null);
+        assertNull(cart, "If the card ID is null, the method should return null.");
     }
 
     // 4) Get Cart By User ID Tests
@@ -338,15 +356,15 @@ class ServiceTests {
     @Test
     void getCartByUserId_whenUserNotFound_shouldThrowException() {
         UUID nonExistentUserId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> cartService.getCartByUserId(nonExistentUserId),
-                "Should throw an exception if user is not found");
+        Cart cart = cartService.getCartByUserId(nonExistentUserId);
+        assertNull(cart, "If the user is nonexistent, the method should return null.");
     }
 
     @Tag("cart")
     @Test
     void getCartByUserId_withNullUserId_shouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> cartService.getCartByUserId(null),
-                "Should throw an exception if user ID is null");
+        Cart cart = cartService.getCartByUserId(null);
+        assertNull(cart, "If the user ID is null, the method should return null.");
     }
 
     // 5) Add Product to Cart Tests
@@ -355,8 +373,9 @@ class ServiceTests {
     void addProductToCart_withValidInput_shouldAddProduct() {
         cartService.addCart(testCart);
         cartService.addProductToCart(testCart.getId(), testProduct);
-        assertTrue(testCart.getProducts().contains(testProduct), "Product should be added to cart");
-    }
+        Cart updatedCart = cartService.getCartById(testCart.getId());
+        assertNotNull(updatedCart, "Cart should exist after adding a product.");
+        assertTrue(updatedCart.getProducts().contains(testProduct), "Product should be added to cart.");    }
 
     @Tag("cart")
     @Test
@@ -406,8 +425,8 @@ class ServiceTests {
     void deleteCart_withValidId_shouldDeleteSuccessfully() {
         cartService.addCart(testCart);
         cartService.deleteCartById(testCart.getId());
-        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(testCart.getId()),
-                "Cart should be deleted and throw an exception when accessed");
+        Cart cart = cartService.getCartById(testCart.getId());
+        assertNull(cart, "Cart should be deleted, the method should return null.");
     }
 
     @Tag("cart")

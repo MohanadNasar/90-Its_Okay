@@ -2,6 +2,7 @@ package com.example.repository;
 
 import com.example.model.Cart;
 import com.example.model.Product;
+import com.example.model.User;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -79,5 +80,9 @@ public class CartRepository extends MainRepository<Cart> {
         this.overrideData(carts);
     }
 
-
+    public void clearCarts() {
+        ArrayList<Cart> carts = this.findAll();
+        carts.clear();
+        this.overrideData(carts);
+    }
 }
