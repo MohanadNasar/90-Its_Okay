@@ -2,14 +2,12 @@ package com.example.repository;
 
 import com.example.model.Cart;
 import com.example.model.Product;
-import com.example.model.User;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class CartRepository extends MainRepository<Cart> {
     @Override
     protected String getDataPath() {

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class CartService extends MainService<Cart>{
     //The Dependency Injection Variables
     private final CartRepository cartRepository;

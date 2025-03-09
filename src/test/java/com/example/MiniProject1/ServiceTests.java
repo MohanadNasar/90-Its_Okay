@@ -445,4 +445,162 @@ class ServiceTests {
         assertThrows(IllegalStateException.class, () -> cartService.deleteCartById(testCart.getId()),
                 "Should throw an exception if cart has products");
     }
+
+    // ------------------------ Product Tests -------------------------
+
+    // 1) Add Product Tests
+    @Tag("product")
+    @Test
+    void addProduct_withValidInput_shouldReturnSameProductId() {
+        Product createdProduct = productService.addProduct(testProduct);
+        assertEquals(testProduct.getId(), createdProduct.getId(), "Product ID should match");
+    }
+
+    @Tag("product")
+    @Test
+    void addProduct_withInvalidData_shouldThrowException() {
+        Product invalidProduct = new Product(); // Missing required fields
+        assertThrows(IllegalArgumentException.class, () -> productService.addProduct(invalidProduct),
+                "Should throw an exception for invalid product data");
+    }
+
+    @Tag("product")
+    @Test
+    void addProduct_withDuplicateProduct_shouldThrowException() {
+        productService.addProduct(testProduct);
+        assertThrows(IllegalStateException.class, () -> productService.addProduct(testProduct),
+                "Should throw an exception for duplicate product");
+    }
+
+    // 2) Get All Products Tests
+    @Tag("product")
+    @Test
+    void getProducts_shouldReturnListOfProducts() {
+        List<Product> products = productService.getProducts();
+        assertNotNull(products, "Products list should not be null");
+    }
+
+    @Tag("product")
+    @Test
+    void getProducts_whenNoProducts_shouldReturnEmptyList() {
+        List<Product> products = productService.getProducts();
+        assertEquals(0, products.size(), "Should return an empty list if no products exist");
+    }
+
+    @Tag("product")
+    @Test
+    void getProducts_whenMultipleProductsExist_shouldReturnCorrectSize() {
+        productService.addProduct(testProduct);
+        List<Product> products = productService.getProducts();
+        assertEquals(1, products.size(), "Product list size should match the number of products added");
+    }
+
+    // 3) Get Product By ID Tests
+    @Tag("product")
+    @Test
+    void getProductById_withValidId_shouldReturnProduct() {
+        productService.addProduct(testProduct);
+        Product retrievedProduct = productService.getProductById(testProduct.getId());
+        assertNotNull(retrievedProduct, "Product should be found");
+    }
+
+    @Tag("product")
+    @Test
+    void getProductById_withInvalidId_shouldThrowException() {
+        UUID nonExistentProductId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(nonExistentProductId),
+                "Should throw an exception if product is not found");
+    }
+
+    @Tag("product")
+    @Test
+    void getProductById_withNullId_shouldThrowException() {
+        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(null),
+                "Should throw an exception if product ID is null");
+    }
+
+    // 4) Update Product Tests
+    @Tag("product")
+    @Test
+    void updateProduct_withValidInput_shouldUpdateSuccessfully() {
+        productService.addProduct(testProduct);
+        Product updatedProduct = productService.updateProduct(testProduct.getId(), "Updated Product", 15.0);
+
+        assertEquals("Updated Product", updatedProduct.getName(), "Product name should be updated");
+        assertEquals(15.0, updatedProduct.getPrice(), "Product price should be updated");
+    }
+
+    @Tag("product")
+    @Test
+    void updateProduct_whenProductNotFound_shouldThrowException() {
+        UUID nonExistentProductId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> productService.updateProduct(nonExistentProductId, "Updated Product", 15.0),
+                "Should throw an exception if product is not found");
+    }
+
+    @Tag("product")
+    @Test
+    void updateProduct_withInvalidData_shouldThrowException() {
+        productService.addProduct(testProduct);
+        assertThrows(IllegalArgumentException.class, () -> productService.updateProduct(testProduct.getId(), "", -10.0),
+                "Should throw an exception for invalid product data");
+    }
+
+    // 5) Apply Discount Tests
+    @Tag("product")
+    @Test
+    void applyDiscount_withValidPercentage_shouldApplySuccessfully() {
+        productService.addProduct(testProduct);
+        ArrayList<UUID> productIds = new ArrayList<>(List.of(testProduct.getId()));
+
+        productService.applyDiscount(20.0, productIds);
+
+        Product updatedProduct = productService.getProductById(testProduct.getId());
+        assertEquals(8.0, updatedProduct.getPrice(), "Product price should be discounted correctly");
+    }
+
+    @Tag("product")
+    @Test
+    void applyDiscount_withInvalidPercentage_shouldThrowException() {
+        ArrayList<UUID> productIds = new ArrayList<>(List.of(testProduct.getId()));
+
+        assertThrows(IllegalArgumentException.class, () -> productService.applyDiscount(-50.0, productIds),
+                "Should throw an exception for negative discount percentage");
+    }
+
+    @Tag("product")
+    @Test
+    void applyDiscount_withEmptyProductList_shouldThrowException() {
+        ArrayList<UUID> emptyProductList = new ArrayList<>();
+        assertThrows(IllegalArgumentException.class, () -> productService.applyDiscount(20.0, emptyProductList),
+                "Should throw an exception if no products are provided for discount");
+    }
+
+    // 6) Delete Product Tests
+    @Tag("product")
+    @Test
+    void deleteProduct_withValidId_shouldDeleteSuccessfully() {
+        productService.addProduct(testProduct);
+        productService.deleteProductById(testProduct.getId());
+
+        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(testProduct.getId()),
+                "Product should be deleted and throw an exception when accessed");
+    }
+
+    @Tag("product")
+    @Test
+    void deleteProduct_whenProductNotFound_shouldThrowException() {
+        UUID nonExistentProductId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> productService.deleteProductById(nonExistentProductId),
+                "Should throw an exception if product is not found");
+    }
+
+    @Tag("product")
+    @Test
+    void deleteProduct_whenLinkedToOrders_shouldThrowException() {
+        // Assuming logic prevents deleting a product linked to an order
+        productService.addProduct(testProduct);
+        assertThrows(IllegalStateException.class, () -> productService.deleteProductById(testProduct.getId()),
+                "Should throw an exception if product is linked to existing orders");
+    }
 }
