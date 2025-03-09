@@ -32,7 +32,7 @@ public class OrderService extends MainService<Order> {
     public void deleteOrderById(UUID orderId) throws IllegalArgumentException{
 
         if (orderRepository.getOrderById(orderId) == null) {
-            throw new IllegalArgumentException("Order with id " + orderId + " does not exist.");
+            throw new IllegalArgumentException("Order not found");
         }
         orderRepository.deleteOrderById(orderId);
     }

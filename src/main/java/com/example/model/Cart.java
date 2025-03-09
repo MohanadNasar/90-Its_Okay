@@ -52,14 +52,6 @@ public class Cart {
         this.products = products;
     }
 
-    //TODO: revisit this method
-    public double getTotalPrice(){
-        double totalPrice = 0;
-        for (Product product : products) {
-            totalPrice += product.getPrice();
-        }
-        return totalPrice;
-    }
 
 }
 
