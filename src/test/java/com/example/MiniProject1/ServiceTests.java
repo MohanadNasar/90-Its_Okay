@@ -118,9 +118,10 @@ class ServiceTests {
 
     @Tag("user")
     @Test
-    void getUserById_whenUserNotFound_shouldThrowException() {
+    void getUserById_whenUserNotFound_shouldReturnNull() {
         UUID nonExistentUserId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserById(nonExistentUserId));
+        User user = userService.getUserById(nonExistentUserId);
+        assertNull(user, "If the user does not exist, the method should return null instead of throwing an exception.");
     }
 
     @Tag("user")
@@ -164,7 +165,7 @@ class ServiceTests {
 
     @Tag("user")
     @Test
-    void addOrderToUser_whenCartEmpty_shouldThrowException() {
+    void addOrderToUser_whenCartNotFound_shouldThrowException() {
         assertThrows(IllegalArgumentException.class, () -> userService.addOrderToUser(userId));
     }
 
@@ -231,20 +232,198 @@ class ServiceTests {
     @Test
     void deleteUser_whenUserExists_shouldDeleteSuccessfully() {
         userService.deleteUserById(userId);
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserById(userId));
+        User deletedUser = userService.getUserById(userId);
+        assertNull(deletedUser, "After deletion, getUserById should return null instead of throwing an exception.");
     }
 
     @Tag("user")
     @Test
     void deleteUser_whenUserHasOrders_shouldThrowException() {
         userRepository.addOrderToUser(userId, testOrder);
-        assertThrows(IllegalStateException.class, () -> userService.deleteUserById(userId));
+        assertThrows(IllegalStateException.class, () -> userService.deleteUserById(userId),
+                "Deleting a user with orders should throw an exception");
     }
 
     @Tag("user")
     @Test
     void deleteUser_whenUserNotFound_shouldThrowException() {
         UUID nonExistentUserId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> userService.deleteUserById(nonExistentUserId));
+        assertThrows(IllegalArgumentException.class, () -> userService.deleteUserById(nonExistentUserId),
+                "Deleting a user with orders should throw an exception");
+    }
+
+    // ------------------------ Cart Tests -------------------------
+
+    // 1) Add Cart Tests
+    @Tag("cart")
+    @Test
+    void addCart_withValidInput_shouldReturnSameCartId() {
+        Cart createdCart = cartService.addCart(testCart);
+        assertEquals(testCart.getId(), createdCart.getId(), "Cart ID should match");
+    }
+
+    @Tag("cart")
+    @Test
+    void addCart_withInvalidData_shouldThrowException() {
+        Cart invalidCart = new Cart(); // Missing required fields
+        assertThrows(IllegalArgumentException.class, () -> cartService.addCart(invalidCart),
+                "Should throw an exception for invalid cart data");
+    }
+
+    @Tag("cart")
+    @Test
+    void addCart_withDuplicateCart_shouldThrowException() {
+        cartService.addCart(testCart);
+        assertThrows(IllegalStateException.class, () -> cartService.addCart(testCart),
+                "Should throw an exception for duplicate cart");
+    }
+
+    // 2) Get All Carts Tests
+    @Tag("cart")
+    @Test
+    void getCarts_shouldReturnListOfCarts() {
+        List<Cart> carts = cartService.getCarts();
+        assertNotNull(carts, "Carts list should not be null");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCarts_whenNoCarts_shouldReturnEmptyList() {
+        List<Cart> carts = cartService.getCarts();
+        assertEquals(0, carts.size(), "Should return an empty list if no carts exist");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCarts_whenMultipleCartsExist_shouldReturnCorrectSize() {
+        cartService.addCart(testCart);
+        List<Cart> carts = cartService.getCarts();
+        assertEquals(1, carts.size(), "Cart list size should match the number of carts added");
+    }
+
+    // 3) Get Cart By ID Tests
+    @Tag("cart")
+    @Test
+    void getCartById_withValidId_shouldReturnCart() {
+        cartService.addCart(testCart);
+        Cart retrievedCart = cartService.getCartById(testCart.getId());
+        assertNotNull(retrievedCart, "Cart should be found");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCartById_withInvalidId_shouldThrowException() {
+        UUID nonExistentCartId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(nonExistentCartId),
+                "Should throw an exception if cart is not found");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCartById_withNullId_shouldThrowException() {
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(null),
+                "Should throw an exception if cart ID is null");
+    }
+
+    // 4) Get Cart By User ID Tests
+    @Tag("cart")
+    @Test
+    void getCartByUserId_withValidUser_shouldReturnCart() {
+        cartService.addCart(testCart);
+        Cart retrievedCart = cartService.getCartByUserId(userId);
+        assertNotNull(retrievedCart, "Cart should be found");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCartByUserId_whenUserNotFound_shouldThrowException() {
+        UUID nonExistentUserId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartByUserId(nonExistentUserId),
+                "Should throw an exception if user is not found");
+    }
+
+    @Tag("cart")
+    @Test
+    void getCartByUserId_withNullUserId_shouldThrowException() {
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartByUserId(null),
+                "Should throw an exception if user ID is null");
+    }
+
+    // 5) Add Product to Cart Tests
+    @Tag("cart")
+    @Test
+    void addProductToCart_withValidInput_shouldAddProduct() {
+        cartService.addCart(testCart);
+        cartService.addProductToCart(testCart.getId(), testProduct);
+        assertTrue(testCart.getProducts().contains(testProduct), "Product should be added to cart");
+    }
+
+    @Tag("cart")
+    @Test
+    void addProductToCart_whenCartNotFound_shouldThrowException() {
+        UUID nonExistentCartId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(nonExistentCartId, testProduct),
+                "Should throw an exception if cart is not found");
+    }
+
+    @Tag("cart")
+    @Test
+    void addProductToCart_withNullProduct_shouldThrowException() {
+        cartService.addCart(testCart);
+        assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(testCart.getId(), null),
+                "Should throw an exception if product is null");
+    }
+
+    // 6) Delete Product from Cart Tests
+    @Tag("cart")
+    @Test
+    void deleteProductFromCart_withValidInput_shouldRemoveProduct() {
+        cartService.addCart(testCart);
+        cartService.addProductToCart(testCart.getId(), testProduct);
+        cartService.deleteProductFromCart(testCart.getId(), testProduct);
+        assertFalse(testCart.getProducts().contains(testProduct), "Product should be removed from cart");
+    }
+
+    @Tag("cart")
+    @Test
+    void deleteProductFromCart_whenCartNotFound_shouldThrowException() {
+        UUID nonExistentCartId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> cartService.deleteProductFromCart(nonExistentCartId, testProduct),
+                "Should throw an exception if cart is not found");
+    }
+
+    @Tag("cart")
+    @Test
+    void deleteProductFromCart_whenProductNotFound_shouldThrowException() {
+        cartService.addCart(testCart);
+        assertThrows(IllegalArgumentException.class, () -> cartService.deleteProductFromCart(testCart.getId(), new Product(UUID.randomUUID(), "Non-existent Product", 10.0)),
+                "Should throw an exception if product is not found in cart");
+    }
+
+    // 7) Delete Cart Tests
+    @Tag("cart")
+    @Test
+    void deleteCart_withValidId_shouldDeleteSuccessfully() {
+        cartService.addCart(testCart);
+        cartService.deleteCartById(testCart.getId());
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartById(testCart.getId()),
+                "Cart should be deleted and throw an exception when accessed");
+    }
+
+    @Tag("cart")
+    @Test
+    void deleteCart_whenCartNotFound_shouldThrowException() {
+        UUID nonExistentCartId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> cartService.deleteCartById(nonExistentCartId),
+                "Should throw an exception if cart is not found");
+    }
+
+    @Tag("cart")
+    @Test
+    void deleteCart_whenCartHasProducts_shouldThrowException() {
+        testCart.setProducts(List.of(testProduct));
+        cartService.addCart(testCart);
+        assertThrows(IllegalStateException.class, () -> cartService.deleteCartById(testCart.getId()),
+                "Should throw an exception if cart has products");
     }
 }

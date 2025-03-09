@@ -32,7 +32,7 @@ public class CartRepository extends MainRepository<Cart> {
     }
     public Cart getCartById(UUID cartId){
         for (Cart cart : this.getCarts()) {
-            if (cart.getId().equals(cartId)) {
+            if (cart.getId() != null && cart.getId().equals(cartId)) {
                 return cart;
             }
         }
@@ -41,7 +41,7 @@ public class CartRepository extends MainRepository<Cart> {
 
     public Cart getCartByUserId(UUID userId){
         for (Cart cart : this.getCarts()) {
-            if (cart.getUserId().equals(userId)) {
+            if (cart.getUserId() != null && cart.getUserId().equals(userId)) {
                 return cart;
             }
         }
@@ -51,7 +51,7 @@ public class CartRepository extends MainRepository<Cart> {
     public void addProductToCart(UUID cartId, Product product){
         ArrayList<Cart> carts = this.getCarts();
         for (Cart cart : carts) {
-            if (cart.getId().equals(cartId)) {
+            if (cart.getId() != null && cart.getId().equals(cartId)) {
                 cart.getProducts().add(product);
                 break;
             }
@@ -61,7 +61,7 @@ public class CartRepository extends MainRepository<Cart> {
     public void deleteProductFromCart(UUID cartId, Product product){
         ArrayList<Cart> carts = this.getCarts();
         for (Cart cart : carts) {
-            if (cart.getId().equals(cartId)) {
+            if (cart.getId() != null && cart.getId().equals(cartId)) {
                 cart.getProducts().remove(product);
                 break;
             }
@@ -71,7 +71,7 @@ public class CartRepository extends MainRepository<Cart> {
     public void deleteCartById(UUID cartId){
         ArrayList<Cart> carts = this.getCarts();
         for (Cart cart : carts) {
-            if (cart.getId().equals(cartId)) {
+            if (cart.getId() != null && cart.getId().equals(cartId)) {
                 carts.remove(cart);
                 break;
             }
