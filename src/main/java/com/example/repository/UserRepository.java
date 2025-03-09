@@ -27,7 +27,7 @@ public class UserRepository extends MainRepository<User>{
         return this.findAll();
     }
 
-    public User getUserById(UUID userId) {
+    public User getUserById(UUID userId){
         for (User user : this.getUsers()) {
             if (user.getId().equals(userId)) {
                 return user;
