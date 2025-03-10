@@ -5,6 +5,7 @@ import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.CartRepository;
+import com.example.repository.OrderRepository;
 import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import com.example.service.CartService;
@@ -46,6 +47,9 @@ class ServiceTests {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     private UUID userId;
     private User testUser;
@@ -615,5 +619,105 @@ class ServiceTests {
         orderService.addOrder(testOrder);
         assertThrows(IllegalStateException.class, () -> productService.deleteProductById(testProduct.getId()),
                 "Should throw an exception if product is linked to existing orders");
+    }
+
+    // ------------------------ Order Tests -------------------------
+
+    // 1) Add Order Tests
+    @Tag("order")
+    @Test
+    void addOrder_withValidInput_shouldReturnSameOrderId() {
+        Order createdOrder = orderService.addOrder(testOrder);
+        assertEquals(testOrder.getId(), createdOrder.getId(), "Order ID should match");
+    }
+
+    @Tag("order")
+    @Test
+    void addOrder_withInvalidData_shouldThrowException() {
+        Order invalidOrder = new Order(); // Missing required fields
+        assertThrows(IllegalArgumentException.class, () -> orderService.addOrder(invalidOrder),
+                "Should throw an exception for invalid order data");
+    }
+
+    @Tag("order")
+    @Test
+    void addOrder_withDuplicateOrder_shouldThrowException() {
+        orderService.addOrder(testOrder);
+        assertThrows(IllegalStateException.class, () -> orderService.addOrder(testOrder),
+                "Should throw an exception for duplicate order");
+    }
+
+    // 2) Get All Orders Tests
+    @Tag("order")
+    @Test
+    void getOrders_shouldReturnListOfOrders() {
+        List<Order> orders = orderService.getOrders();
+        assertNotNull(orders, "Orders list should not be null");
+    }
+
+    @Tag("order")
+    @Test
+    void getOrders_whenNoOrders_shouldReturnEmptyList() {
+        List<Order> orders = orderService.getOrders();
+        assertEquals(0, orders.size(), "Should return an empty list if no orders exist");
+    }
+
+    @Tag("order")
+    @Test
+    void getOrders_whenMultipleOrdersExist_shouldReturnCorrectSize() {
+        orderService.addOrder(testOrder);
+        List<Order> orders = orderService.getOrders();
+        assertEquals(1, orders.size(), "Orders list size should match the number of orders added");
+    }
+
+    // 3) Get Order By ID Tests
+    @Tag("order")
+    @Test
+    void getOrderById_withValidId_shouldReturnOrder() {
+        orderService.addOrder(testOrder);
+        Order retrievedOrder = orderService.getOrderById(testOrder.getId());
+        assertNotNull(retrievedOrder, "Order should be found");
+    }
+
+    @Tag("order")
+    @Test
+    void getOrderById_withInvalidId_shouldThrowException() {
+        UUID nonExistentOrderId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> orderService.getOrderById(nonExistentOrderId),
+                "Should throw an exception if order is not found");
+    }
+
+    @Tag("order")
+    @Test
+    void getOrderById_withNullId_shouldThrowException() {
+        assertThrows(IllegalArgumentException.class, () -> orderService.getOrderById(null),
+                "Should throw an exception if order ID is null");
+    }
+
+    // 4) Delete Order Tests
+    @Tag("order")
+    @Test
+    void deleteOrder_withValidId_shouldDeleteSuccessfully() {
+        orderService.addOrder(testOrder);
+        orderService.deleteOrderById(testOrder.getId());
+        assertThrows(IllegalArgumentException.class, () -> orderService.getOrderById(testOrder.getId()),
+                "Order should be deleted and throw an exception when accessed");
+    }
+
+    @Tag("order")
+    @Test
+    void deleteOrder_whenOrderNotFound_shouldThrowException() {
+        UUID nonExistentOrderId = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> orderService.deleteOrderById(nonExistentOrderId),
+                "Should throw an exception if order is not found");
+    }
+
+    @Tag("order")
+    @Test
+    void deleteOrder_whenLinkedToOtherEntities_shouldThrowException() {
+        // Assuming logic prevents deleting an order if it is linked to another entity
+        orderService.addOrder(testOrder);
+        assertThrows(IllegalStateException.class, () -> orderService.deleteOrderById(testOrder.getId()),
+                "Should throw an exception if order is linked to existing entities");
     }
 }

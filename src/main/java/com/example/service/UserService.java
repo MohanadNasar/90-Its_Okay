@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class UserService extends MainService<User>{
     //The Dependency Injection Variables
     private final UserRepository userRepository;
