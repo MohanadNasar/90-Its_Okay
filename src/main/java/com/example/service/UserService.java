@@ -31,7 +31,6 @@ public class UserService extends MainService<User>{
         if (user == null || user.getName() == null || user.getName().isEmpty() || user.getId() == null) {
             throw new IllegalArgumentException("Invalid user data");
         }
-
         // Check for duplicate user
         ArrayList<User> existingUsers = userRepository.getUsers();
         for (User existingUser : existingUsers) {

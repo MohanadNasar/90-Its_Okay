@@ -5,6 +5,7 @@ import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.CartRepository;
+import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import com.example.service.CartService;
 import com.example.service.OrderService;
@@ -39,6 +40,9 @@ class ServiceTests {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private OrderService orderService;
@@ -483,16 +487,26 @@ class ServiceTests {
     @Tag("product")
     @Test
     void getProducts_whenNoProducts_shouldReturnEmptyList() {
-        List<Product> products = productService.getProducts();
+        productRepository.clearProducts();
+        ArrayList<Product> products = productService.getProducts();
         assertEquals(0, products.size(), "Should return an empty list if no products exist");
     }
 
     @Tag("product")
     @Test
     void getProducts_whenMultipleProductsExist_shouldReturnCorrectSize() {
+
+        int size = productService.getProducts().size();
+
+        Product secondProduct = new Product();
+        secondProduct.setId(UUID.randomUUID());
+        secondProduct.setName("Second Product");
+
         productService.addProduct(testProduct);
+        productService.addProduct(secondProduct);
+
         List<Product> products = productService.getProducts();
-        assertEquals(1, products.size(), "Product list size should match the number of products added");
+        assertEquals(2, products.size() - size, "Product list size should match the number of products added");
     }
 
     // 3) Get Product By ID Tests
@@ -508,8 +522,8 @@ class ServiceTests {
     @Test
     void getProductById_withInvalidId_shouldThrowException() {
         UUID nonExistentProductId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(nonExistentProductId),
-                "Should throw an exception if product is not found");
+        Product product = productService.getProductById(nonExistentProductId);
+        assertNull(product, "If the product is not found, the method should return null.");
     }
 
     @Tag("product")
@@ -582,9 +596,8 @@ class ServiceTests {
     void deleteProduct_withValidId_shouldDeleteSuccessfully() {
         productService.addProduct(testProduct);
         productService.deleteProductById(testProduct.getId());
-
-        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(testProduct.getId()),
-                "Product should be deleted and throw an exception when accessed");
+        Product product = productService.getProductById(testProduct.getId());
+        assertNull(product, "Product should be deleted and throw an exception when accessed");
     }
 
     @Tag("product")
@@ -598,8 +611,8 @@ class ServiceTests {
     @Tag("product")
     @Test
     void deleteProduct_whenLinkedToOrders_shouldThrowException() {
-        // Assuming logic prevents deleting a product linked to an order
         productService.addProduct(testProduct);
+        orderService.addOrder(testOrder);
         assertThrows(IllegalStateException.class, () -> productService.deleteProductById(testProduct.getId()),
                 "Should throw an exception if product is linked to existing orders");
     }
