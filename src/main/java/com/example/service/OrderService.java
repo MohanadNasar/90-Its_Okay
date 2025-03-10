@@ -1,7 +1,6 @@
 package com.example.service;
 
 import com.example.model.Order;
-import com.example.model.Product;
 import com.example.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class OrderService extends MainService<Order> {
 
     //The Dependency Injection Variables
