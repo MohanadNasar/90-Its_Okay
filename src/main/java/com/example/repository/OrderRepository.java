@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class OrderRepository extends MainRepository<Order> {
     @Override
     protected String getDataPath() {
@@ -33,7 +32,7 @@ public class OrderRepository extends MainRepository<Order> {
 
     public Order getOrderById(UUID orderId){
         for (Order order : this.getOrders()) {
-            if (order.getId().equals(orderId)) {
+            if (order.getId() != null && order.getId().equals(orderId)) {
                 return order;
             }
         }
@@ -43,7 +42,7 @@ public class OrderRepository extends MainRepository<Order> {
     public void deleteOrderById(UUID orderId){
         ArrayList<Order> orders = this.getOrders();
         for (Order order : orders) {
-            if (order.getId().equals(orderId)) {
+            if (order.getId() != null && order.getId().equals(orderId)) {
                 orders.remove(order);
                 break;
             }
@@ -51,6 +50,10 @@ public class OrderRepository extends MainRepository<Order> {
         this.overrideData(orders);
     }
 
-
+    public void clearOrders() {
+        ArrayList<Order> orders = this.findAll();
+        orders.clear();
+        this.overrideData(orders);
+    }
 
 }

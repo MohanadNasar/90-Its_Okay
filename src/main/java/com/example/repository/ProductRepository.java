@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class ProductRepository extends MainRepository<Product> {
     @Override
     protected String getDataPath() {
@@ -31,7 +30,7 @@ public class ProductRepository extends MainRepository<Product> {
 
     public Product getProductById(UUID productId){
         for (Product product : this.getProducts()) {
-            if (product.getId().equals(productId)) {
+            if (product.getId() != null && product.getId().equals(productId)) {
                 return product;
             }
         }
@@ -41,7 +40,7 @@ public class ProductRepository extends MainRepository<Product> {
     public Product updateProduct(UUID productId, String newName, double newPrice){
         ArrayList<Product> products = this.getProducts();
         for (Product product : products) {
-            if (product.getId().equals(productId)) {
+            if (product.getId() != null && product.getId().equals(productId)) {
                 product.setName(newName);
                 product.setPrice(newPrice);
                 break;
@@ -64,7 +63,7 @@ public class ProductRepository extends MainRepository<Product> {
     public void deleteProductById(UUID productId){
         ArrayList<Product> products = this.getProducts();
         for (Product product : products) {
-            if (product.getId().equals(productId)) {
+            if (product.getId() != null && product.getId().equals(productId)) {
                 products.remove(product);
                 break;
             }
@@ -72,5 +71,10 @@ public class ProductRepository extends MainRepository<Product> {
         this.overrideData(products);
     }
 
+    public void clearProducts() {
+        ArrayList<Product> products = this.findAll();
+        products.clear();
+        this.overrideData(products);
+    }
 
 }

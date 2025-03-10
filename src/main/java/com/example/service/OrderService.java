@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class OrderService extends MainService<Order> {
 
     //The Dependency Injection Variables
@@ -18,6 +17,16 @@ public class OrderService extends MainService<Order> {
         this.orderRepository = orderRepository;
     }
     public Order addOrder(Order order){
+        if (order == null || order.getId() == null) {
+            throw new IllegalArgumentException("Order not found");
+        }
+
+        ArrayList<Order> existingOrders = orderRepository.getOrders();
+        for (Order existingOrder : existingOrders) {
+            if (existingOrder.getId().equals(order.getId())) {
+                throw new IllegalStateException("Order already exists");
+            }
+        }
         return orderRepository.addOrder(order);
     }
 
@@ -26,14 +35,24 @@ public class OrderService extends MainService<Order> {
     }
 
     public Order getOrderById(UUID orderId){
+        if(orderId == null){
+            throw  new IllegalArgumentException("Order ID is null");
+        }
         return orderRepository.getOrderById(orderId);
     }
 
     public void deleteOrderById(UUID orderId) throws IllegalArgumentException{
+        Order order = orderRepository.getOrderById(orderId);
 
-        if (orderRepository.getOrderById(orderId) == null) {
+        if (order == null) {
             throw new IllegalArgumentException("Order not found");
         }
+
+        // Check if order has products
+        if (order.getProducts() != null && !order.getProducts().isEmpty()) {
+            throw new IllegalStateException("Cannot delete order: It contains products.");
+        }
+
         orderRepository.deleteOrderById(orderId);
     }
 
