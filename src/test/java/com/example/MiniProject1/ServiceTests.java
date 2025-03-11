@@ -540,7 +540,7 @@ class ServiceTests {
     // 4) Update Product Tests
     @Tag("product")
     @Test
-    void updateProduct_withValidInput_shouldUpdateSuccessfully() {
+    void updateProduct_withValidInput_shouldUpdateSuccessfully() throws Exception {
         productService.addProduct(testProduct);
         Product updatedProduct = productService.updateProduct(testProduct.getId(), "Updated Product", 15.0);
 

@@ -39,10 +39,24 @@ public class CartService extends MainService<Cart>{
     }
 
     public Cart getCartById(UUID cartId){
+        if(cartId == null){
+            throw new IllegalArgumentException("Cart ID is null");
+        }
+        if(cartRepository.getCartById(cartId) == null){
+            throw new IllegalArgumentException("Cart not found");
+        }
         return cartRepository.getCartById(cartId);
     }
 
     public Cart getCartByUserId(UUID userId){
+        if(userId == null){
+            throw new IllegalArgumentException("User ID is null");
+        }
+
+        if(cartRepository.getCartByUserId(userId) == null){
+            throw new IllegalArgumentException("Cart not found");
+        }
+
         return cartRepository.getCartByUserId(userId);
     }
 
@@ -78,10 +92,7 @@ public class CartService extends MainService<Cart>{
         if(cart == null){
             throw new IllegalArgumentException("Cart not found");
         }
-        // Check if cart has products
-        if (!cart.getProducts().isEmpty()) {
-            throw new IllegalStateException("Cannot delete cart with products");
-        }
+
         cartRepository.deleteCartById(cartId);
     }
 

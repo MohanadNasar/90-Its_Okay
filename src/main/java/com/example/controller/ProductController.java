@@ -45,8 +45,13 @@ public class ProductController {
         if (priceObj instanceof Number) {
             newPrice = ((Number) priceObj).doubleValue();
         }
+        try{
+            return productService.updateProduct(productId, newName, newPrice);
 
-        return productService.updateProduct(productId, newName, newPrice);
+        }
+        catch(Exception e){
+            return null;
+        }
     }
 
 
