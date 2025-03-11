@@ -53,10 +53,6 @@ public class CartService extends MainService<Cart>{
             throw new IllegalArgumentException("User ID is null");
         }
 
-        if(cartRepository.getCartByUserId(userId) == null){
-            throw new IllegalArgumentException("Cart not found");
-        }
-
         return cartRepository.getCartByUserId(userId);
     }
 

@@ -50,9 +50,6 @@ public class UserService extends MainService<User>{
         if (userId == null) {
             throw new IllegalArgumentException("Invalid user ID");
         }
-        if(userRepository.getUserById(userId) == null){
-            throw new IllegalArgumentException("User not found");
-        }
         return userRepository.getUserById(userId);
     }
 
