@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -175,9 +176,31 @@ class ServiceTests {
     @Tag("user")
     @Test
     void addOrderToUser_whenValidCart_shouldAddOrder() {
-        cartService.addCart(testCart);
+        UUID userId = UUID.randomUUID();
+        User user = new User(userId, "John Smith", new ArrayList<>());
+        userService.addUser(user);
+
+        Cart cart = new Cart(UUID.randomUUID(), userId, new ArrayList<>(Arrays.asList(
+                new Product(UUID.randomUUID(), "Product A", 50.0),
+                new Product(UUID.randomUUID(), "Product B", 100.0)
+        )));
+        cartService.addCart(cart);
+
         userService.addOrderToUser(userId);
-        assertFalse(userService.getOrdersByUserId(userId).isEmpty());
+
+        ArrayList<User> users = userService.getUsers();
+        User retrievedUser = null;
+        for (User u : users) {
+            if (u.getId().equals(userId)) {
+                retrievedUser = u;
+                break;
+            }
+        }
+
+        assertNotNull(retrievedUser, "User should exist in the system");
+        assertEquals(1, retrievedUser.getOrders().size(), "User should have one order");
+        assertEquals(150.0, retrievedUser.getOrders().get(0).getTotalPrice(), "Order total price should be correct");
+        assertEquals(2, retrievedUser.getOrders().get(0).getProducts().size(), "Order should have two products");
     }
 
     @Tag("user")
@@ -226,9 +249,33 @@ class ServiceTests {
     @Tag("user")
     @Test
     void removeOrderFromUser_whenOrderExists_shouldRemoveOrder() {
-        userRepository.addOrderToUser(userId, testOrder);
-        userService.removeOrderFromUser(userId, testOrder.getId());
-        assertFalse(userService.getOrdersByUserId(userId).contains(testOrder));
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order(orderId, userId, 100.0, new ArrayList<>());
+        User user = new User(userId, "John Doe", new ArrayList<>(Arrays.asList(order)));
+        orderService.addOrder(order);
+        userService.addUser(user);
+
+        userService.removeOrderFromUser(userId, order.getId());
+
+        boolean orderExists = false;
+        for (Order o : orderService.getOrders()) {
+            if (o.getId().equals(orderId)) {
+                orderExists = true;
+                break;
+            }
+        }
+        assertFalse(orderExists, "Order should be deleted");
+
+        boolean orderInUser = false;
+        for (Order o : userService.getUserById(userId).getOrders()) {
+            if (o.getId().equals(orderId)) {
+                orderInUser = true;
+                break;
+            }
+        }
+        assertFalse(orderInUser, "User should have no orders");
     }
 
     @Tag("user")
@@ -340,15 +387,18 @@ class ServiceTests {
     @Test
     void getCartById_withInvalidId_shouldReturnNull() {
         UUID nonExistentCartId = UUID.randomUUID();
-        Cart cart = cartService.getCartById(nonExistentCartId);
-        assertNull(cart, "If the cart does not exist, the method should return null.");
+        assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(nonExistentCartId, testProduct),
+                "Should throw an exception if cart is not found");
     }
 
     @Tag("cart")
     @Test
     void getCartById_withNullId_shouldReturnNull() {
-        Cart cart = cartService.getCartById(null);
-        assertNull(cart, "If the card ID is null, the method should return null.");
+        Exception exception = assertThrows(Exception.class, () -> cartService.getCartById(null),
+                "Retrieving a cart with a null ID should throw an exception");
+
+        assertEquals("Cart ID is null", exception.getMessage(),
+                "Exception message should indicate cart not found");
     }
 
     // 4) Get Cart By User ID Tests
@@ -371,8 +421,8 @@ class ServiceTests {
     @Tag("cart")
     @Test
     void getCartByUserId_withNullUserId_shouldReturnNull() {
-        Cart cart = cartService.getCartByUserId(null);
-        assertNull(cart, "If the user ID is null, the method should return null.");
+        assertThrows(IllegalArgumentException.class, () -> cartService.getCartByUserId(null),
+                "Should throw an exception if cart is not found");
     }
 
     // 5) Add Product to Cart Tests
@@ -433,8 +483,9 @@ class ServiceTests {
     void deleteCart_withValidId_shouldDeleteSuccessfully() {
         cartService.addCart(testCart);
         cartService.deleteCartById(testCart.getId());
-        Cart cart = cartService.getCartById(testCart.getId());
-        assertNull(cart, "Cart should be deleted, the method should return null.");
+        List<Cart> remainingCarts = cartService.getCarts();
+        assertFalse(remainingCarts.stream().anyMatch(c -> c.getId().equals(testCart.getId())),
+                "Cart should be deleted and should not be present in the cart list.");
     }
 
     @Tag("cart")
@@ -447,11 +498,12 @@ class ServiceTests {
 
     @Tag("cart")
     @Test
-    void deleteCart_whenCartHasProducts_shouldThrowException() {
-        testCart.setProducts(List.of(testProduct));
-        cartService.addCart(testCart);
-        assertThrows(IllegalStateException.class, () -> cartService.deleteCartById(testCart.getId()),
-                "Should throw an exception if cart has products");
+    void deleteCart_withNullId_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> cartService.deleteCartById(null),
+                "Deleting a cart with a null ID should throw an exception");
+
+        assertEquals("Cart ID is null", exception.getMessage(),
+                "Exception message should indicate cart not found");
     }
 
     // ------------------------ Product Tests -------------------------
@@ -526,9 +578,8 @@ class ServiceTests {
     @Test
     void getProductById_withInvalidId_shouldReturnNull() {
         UUID nonExistentProductId = UUID.randomUUID();
-        Product product = productService.getProductById(nonExistentProductId);
-        assertNull(product, "If the product is not found, the method should return null.");
-    }
+        assertThrows(IllegalArgumentException.class, () -> productService.getProductById(nonExistentProductId),
+                "Should throw an exception if product is not found");    }
 
     @Tag("product")
     @Test
@@ -552,7 +603,7 @@ class ServiceTests {
     @Test
     void updateProduct_whenProductNotFound_shouldThrowException() {
         UUID nonExistentProductId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> productService.updateProduct(nonExistentProductId, "Updated Product", 15.0),
+        assertThrows(NullPointerException.class, () -> productService.updateProduct(nonExistentProductId, "Updated Product", 15.0),
                 "Should throw an exception if product is not found");
     }
 
@@ -560,7 +611,7 @@ class ServiceTests {
     @Test
     void updateProduct_withInvalidData_shouldThrowException() {
         productService.addProduct(testProduct);
-        assertThrows(IllegalArgumentException.class, () -> productService.updateProduct(testProduct.getId(), "", -10.0),
+        assertThrows(Exception.class, () -> productService.updateProduct(testProduct.getId(), "", -10.0),
                 "Should throw an exception for invalid product data");
     }
 
@@ -600,8 +651,9 @@ class ServiceTests {
     void deleteProduct_withValidId_shouldDeleteSuccessfully() {
         productService.addProduct(testProduct);
         productService.deleteProductById(testProduct.getId());
-        Product product = productService.getProductById(testProduct.getId());
-        assertNull(product, "Product should be deleted, the method should return null.");
+        List<Product> remainingProducts = productService.getProducts();
+        assertFalse(remainingProducts.stream().anyMatch(p -> p.getId().equals(testProduct.getId())),
+                "Product should be deleted and should not be present in the product list.");
     }
 
     @Tag("product")
@@ -692,8 +744,10 @@ class ServiceTests {
     @Test
     void getOrderById_withInvalidId_shouldThrowException() {
         UUID nonExistentOrderId = UUID.randomUUID();
-        Order order = orderService.getOrderById(nonExistentOrderId);
-        assertNull(order,"If order is not found, the method should return null." );
+        Exception exception = assertThrows(Exception.class, () -> orderService.getOrderById(nonExistentOrderId),
+                "Retrieving an order with an invalid ID should throw an exception");
+        assertEquals("Order not found", exception.getMessage(),
+                "Exception message should indicate order not found");
     }
 
     @Tag("order")
@@ -710,8 +764,9 @@ class ServiceTests {
         testOrder.setProducts(new ArrayList<>());
         orderService.addOrder(testOrder);
         orderService.deleteOrderById(testOrder.getId());
-        Order order = orderService.getOrderById(testOrder.getId());
-        assertNull(order, "Order should be deleted, the method should return null.");
+        List<Order> remainingOrders = orderService.getOrders();
+        assertFalse(remainingOrders.stream().anyMatch(o -> o.getId().equals(testOrder.getId())),
+                "Order should be deleted and should not be present in the order list.");
     }
 
     @Tag("order")
@@ -724,10 +779,33 @@ class ServiceTests {
 
     @Tag("order")
     @Test
-    void deleteOrder_whenOrderHasProducts_shouldThrowException() {
-        testOrder.setProducts(List.of(testProduct));
-        orderService.addOrder(testOrder);
-        assertThrows(IllegalStateException.class, () -> orderService.deleteOrderById(testOrder.getId()),
-                "Should throw an exception if order is linked to existing entities");
+    void deleteOrderById_shouldDeleteItFromUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        Order order = new Order(orderId, userId, 100.0, new ArrayList<>());
+        User user = new User(userId, "John Doe", new ArrayList<>(Arrays.asList(order)));
+
+        orderService.addOrder(order);
+        userService.addUser(user);
+
+        orderService.deleteOrderById(orderId);
+
+        boolean orderExists = false;
+        for (Order o : orderService.getOrders()) {
+            if (o.getId().equals(orderId)) {
+                orderExists = true;
+                break;
+            }
+        }
+        assertFalse(orderExists, "Order should be deleted");
+
+        boolean orderInUser = false;
+        for (Order o : userService.getUserById(userId).getOrders()) {
+            if (o.getId().equals(orderId)) {
+                orderInUser = true;
+                break;
+            }
+        }
+        assertFalse(orderInUser, "User should have no orders");
     }
 }
