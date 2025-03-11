@@ -2,6 +2,7 @@ package com.example.repository;
 
 import com.example.model.Order;
 import com.example.model.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -13,9 +14,13 @@ import java.util.UUID;
 public class UserRepository extends MainRepository<User>{
     public UserRepository() {
     }
+
+    @Value("${spring.application.userDataPath}")
+    private String userDataPath;
+
     @Override
     protected String getDataPath() {
-        return "src/main/java/com/example/data/users.json";
+        return userDataPath;
     }
 
     @Override

@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:8080"
+    restart: always
+    volumes:
+      - ./src/main/java/com/example/data/users.json:/app/data/users.json
+      - ./src/main/java/com/example/data/products.json:/app/data/products.json
+      - ./src/main/java/com/example/data/carts.json:/app/data/carts.json
+      - ./src/main/java/com/example/data/orders.json:/app/data/orders.json
+    environment:
+      - USERS_DATA=/app/data/users.json
+      - PRODUCTS_DATA=/app/data/products.json
+      - CARTS_DATA=/app/data/carts.json
+      - ORDERS_DATA=/app/data/orders.json
