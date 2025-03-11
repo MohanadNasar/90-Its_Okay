@@ -42,27 +42,39 @@ public class ProductRepository extends MainRepository<Product> {
         return null;
     }
 
-    public Product updateProduct(UUID productId, String newName, double newPrice){
-        ArrayList<Product> products = this.getProducts();
-        for (Product product : products) {
-            if (product.getId() != null && product.getId().equals(productId)) {
-                product.setName(newName);
-                product.setPrice(newPrice);
-                break;
-            }
+    public Product updateProduct(UUID productId, String newName, double newPrice) throws Exception {
+        Product product = getProductById(productId);
+
+        if (newName == null || newName.isEmpty()) {
+            throw new Exception("Please write a name");
         }
-        this.overrideData(products);
-        return this.getProductById(productId);
+
+        if (newPrice < 0) {
+            throw new Exception("Price should be a negative value");
+        }
+
+        // Update the product
+        product.setName(newName);
+        product.setPrice(newPrice);
+
+        ArrayList<Product> products = findAll();
+        products.remove(product);
+        products.add(product);
+        saveAll(products);
+        return product;
     }
 
     public void applyDiscount(double discount, ArrayList<UUID> productIds){
-        ArrayList<Product> products = this.getProducts();
-        for (Product product : products) {
-            if (productIds.contains(product.getId())) {
-                product.setPrice(product.getPrice() - (product.getPrice() * (discount/100)));
-            }
+        ArrayList<Product> products = findAll();
+        for (UUID productId : productIds) {
+            Product product = getProductById(productId);
+            double newPrice = product.getPrice() * (1 - discount / 100);
+            product.setPrice(newPrice);
+            products.remove(product);
+            products.add(product);
         }
-        this.overrideData(products);
+
+        saveAll(products);
     }
 
     public void deleteProductById(UUID productId){
